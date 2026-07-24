@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "goplay-core"
+version = "0.1.0"
+description = "Self-healing document and CSV transformation engine powered by Claude"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Thushara Wijeratna" }
+]
+keywords = [
+    "data-wrangling", 
+    "claude", 
+    "anthropic", 
+    "pandas", 
+    "csv", 
+    "pdf", 
+    "code-generation", 
+    "automation"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Software Development :: Code Generators",
+]
+
+# Core runtime dependencies required by the engine
+dependencies = [
+    "anthropic>=0.25.0",
+    "pandas>=2.0.0",
+    "tenacity>=8.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "build",
+    "twine",
+]
+
+[project.urls]
+Homepage = "https://github.com/thushw/goplay-core"
+Documentation = "https://github.com/thushw/goplay-core#readme"
+Repository = "https://github.com/thushw/goplay-core.git"
+Issues = "https://github.com/thushw/goplay-core/issues"
+
+# Optional terminal command line utility
+[project.scripts]
+goplay = "goplay_core.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

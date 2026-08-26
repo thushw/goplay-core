@@ -82,7 +82,8 @@ class GoPlayEngine:
         output_csv_path: str,
         user_prompt: str,
         df_sample_str: str,
-        input_format: str = "csv"
+        input_format: str = "csv",
+        header_row: int = 0
     ) -> tuple[bool, str]:
         max_attempts = 2
         error_context = ""
@@ -90,10 +91,11 @@ class GoPlayEngine:
         for attempt in range(1, max_attempts + 1):
             prompt = (
                 f"Input Format: {input_format.upper()}\n"
+                f"Header Row: {header_row} (0-indexed — use header={header_row} when reading)\n"
                 f"File Header & First 3 Rows:\n{df_sample_str}\n\n"
                 f"USER REQUEST: {user_prompt}\n"
                 f"\nIMPORTANT: Use the EXACT column names shown above. "
-                f"If reading Excel, always use header=0 (the first row). "
+                f"Use header={header_row} when reading the file. "
                 f"If the file has multiple sheets, the sample shows all sheets — "
                 f"your code should read only the relevant sheet.\n"
             )
@@ -114,6 +116,7 @@ class GoPlayEngine:
                     "input_path": input_csv_path,
                     "output_path": output_csv_path,
                     "input_format": input_format,
+                    "header_row": header_row,
                 }
                 exec(py_code, exec_globals)
 
@@ -125,11 +128,11 @@ class GoPlayEngine:
             except KeyError as e:
                 error_context = (
                     f"KeyError: {e} — the column does not exist in the data.\n"
-                    f"Available columns when reading the file:\n"
+                    f"Available columns when reading the file (header={header_row}):\n"
                 )
                 try:
                     if input_format == "excel":
-                        _df = pd.read_excel(input_csv_path, nrows=0)
+                        _df = pd.read_excel(input_csv_path, header=header_row, nrows=0)
                     else:
                         _df = pd.read_csv(input_csv_path, nrows=0)
                     error_context += f"{_df.columns.tolist()}\n"

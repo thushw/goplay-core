@@ -1,4 +1,6 @@
 import os
+import io
+import sys
 import traceback
 import pandas as pd
 import anthropic
@@ -10,16 +12,21 @@ You are an expert Python Data Engineer. Your task is to generate executable Pyth
 CRITICAL REQUIREMENTS:
 1. Return ONLY pure executable Python code inside a single ```python ``` code block.
 2. The code MUST read the input file from `input_path` and write the transformed DataFrame to `output_path`.
-3. Assume `input_path`, `output_path`, and `input_format` variables are already defined in the execution context.
+3. Assume `input_path`, `output_path`, `input_format`, and `header_row` variables are already defined in the execution context.
 4. `input_format` is either "csv" or "excel" — use the appropriate read/write functions.
 5. AGGREGATIONS & GROUPING: When performing `.groupby()`, value counts, or aggregations, ALWAYS ensure result columns (including counts and group keys) are preserved in the final DataFrame. Use `as_index=False` or `.reset_index()` before saving.
 6. ALWAYS save with `index=False` unless the user explicitly requested row index numbers.
 7. Do NOT include markdown commentary outside the code block.
 8. ONLY use column names that are EXACTLY as shown in the provided header/sample. Do NOT guess or invent column names. If unsure, print `df.columns.tolist()` first and verify before writing transformation code.
 
+OUTPUT RULES:
+- If the user asks for a SINGLE VALUE (sum, count, average, percentage, etc.), compute it, PRINT the result using `print()`, and STILL write it to `output_path` as a single-row CSV/Excel.
+- If the user asks for a TRANSFORMED TABLE, filter, sort, or group — write the result to `output_path` as a normal file.
+- When printing aggregation results, format them clearly, e.g.: `print(f"Total Revenue for Patricia: ${total:,.2f}")`
+
 INPUT FORMAT RULES:
-- If `input_format` is "csv": Use `pd.read_csv(input_path)` to read and `df.to_csv(output_path, index=False)` to write.
-- If `input_format` is "excel": Use `pd.read_excel(input_path)` to read and `df.to_excel(output_path, index=False, engine='openpyxl')` to write.
+- If `input_format` is "csv": Use `pd.read_csv(input_path, header=header_row)` to read and `df.to_csv(output_path, index=False)` to write.
+- If `input_format` is "excel": Use `pd.read_excel(input_path, header=header_row)` to read and `df.to_excel(output_path, index=False, engine='openpyxl')` to write.
 - For Excel files with multiple sheets, use `sheet_name=None` to read all sheets as a dict of DataFrames, then concatenate them. Add a "sheet_name" column to track which sheet each row came from.
 - For Excel output, always write to a single sheet named "Sheet1".
 
@@ -118,10 +125,21 @@ class GoPlayEngine:
                     "input_format": input_format,
                     "header_row": header_row,
                 }
-                exec(py_code, exec_globals)
+
+                captured_output = io.StringIO()
+                old_stdout = sys.stdout
+                sys.stdout = captured_output
+                try:
+                    exec(py_code, exec_globals)
+                finally:
+                    sys.stdout = old_stdout
+
+                printed_output = captured_output.getvalue().strip()
 
                 if os.path.exists(output_csv_path) and os.path.getsize(output_csv_path) > 0:
-                    return True, "Transformation executed successfully."
+                    return True, printed_output or "Transformation executed successfully."
+                elif printed_output:
+                    return True, printed_output
                 else:
                     error_context = "Output file was not created or was empty."
 

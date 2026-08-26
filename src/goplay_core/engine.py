@@ -70,7 +70,6 @@ class GoPlayEngine:
         response = self.client.messages.create(
             model=self.resolved_model,
             max_tokens=2000,
-            temperature=0.0,
             system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}]
         )

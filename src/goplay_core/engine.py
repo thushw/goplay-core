@@ -15,6 +15,7 @@ CRITICAL REQUIREMENTS:
 5. AGGREGATIONS & GROUPING: When performing `.groupby()`, value counts, or aggregations, ALWAYS ensure result columns (including counts and group keys) are preserved in the final DataFrame. Use `as_index=False` or `.reset_index()` before saving.
 6. ALWAYS save with `index=False` unless the user explicitly requested row index numbers.
 7. Do NOT include markdown commentary outside the code block.
+8. ONLY use column names that are EXACTLY as shown in the provided header/sample. Do NOT guess or invent column names. If unsure, print `df.columns.tolist()` first and verify before writing transformation code.
 
 INPUT FORMAT RULES:
 - If `input_format` is "csv": Use `pd.read_csv(input_path)` to read and `df.to_csv(output_path, index=False)` to write.

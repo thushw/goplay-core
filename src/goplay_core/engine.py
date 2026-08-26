@@ -92,6 +92,10 @@ class GoPlayEngine:
                 f"Input Format: {input_format.upper()}\n"
                 f"File Header & First 3 Rows:\n{df_sample_str}\n\n"
                 f"USER REQUEST: {user_prompt}\n"
+                f"\nIMPORTANT: Use the EXACT column names shown above. "
+                f"If reading Excel, always use header=0 (the first row). "
+                f"If the file has multiple sheets, the sample shows all sheets — "
+                f"your code should read only the relevant sheet.\n"
             )
             if error_context:
                 prompt += f"\nYOUR PREVIOUS CODE FAILED WITH ERROR:\n{error_context}\nPlease fix the code and return a corrected version."
@@ -118,6 +122,20 @@ class GoPlayEngine:
                 else:
                     error_context = "Output file was not created or was empty."
 
+            except KeyError as e:
+                error_context = (
+                    f"KeyError: {e} — the column does not exist in the data.\n"
+                    f"Available columns when reading the file:\n"
+                )
+                try:
+                    if input_format == "excel":
+                        _df = pd.read_excel(input_csv_path, nrows=0)
+                    else:
+                        _df = pd.read_csv(input_csv_path, nrows=0)
+                    error_context += f"{_df.columns.tolist()}\n"
+                except Exception:
+                    error_context += "(could not re-read file to list columns)\n"
+                error_context += traceback.format_exc()
             except Exception as e:
                 error_context = f"{type(e).__name__}: {str(e)}\n{traceback.format_exc()}"
 

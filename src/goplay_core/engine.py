@@ -1,3 +1,4 @@
+import logging
 import os
 import io
 import sys
@@ -5,6 +6,10 @@ import traceback
 import pandas as pd
 import anthropic
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+
+from .pricing import estimate_cost_usd
+
+logger = logging.getLogger(__name__)
 
 SYSTEM_CODE_GEN_PROMPT = """
 You are an expert Python Data Engineer. Your task is to generate executable Python code using Pandas to transform a data file.
@@ -87,6 +92,23 @@ class GoPlayEngine:
             system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}]
         )
+
+        usage = response.usage
+        cost = estimate_cost_usd(response.model, usage)
+        if cost is not None:
+            logger.info(
+                "Claude API call: model=%s input=%d output=%d cache_write=%d cache_read=%d cost=$%.4f",
+                response.model, usage.input_tokens, usage.output_tokens,
+                getattr(usage, "cache_creation_input_tokens", 0) or 0,
+                getattr(usage, "cache_read_input_tokens", 0) or 0,
+                cost,
+            )
+        else:
+            logger.info(
+                "Claude API call: model=%s input=%d output=%d (no pricing data for this model)",
+                response.model, usage.input_tokens, usage.output_tokens,
+            )
+
         return response.content[0].text
 
     def execute_transformation_with_repair(

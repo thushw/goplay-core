@@ -25,6 +25,11 @@ OUTPUT RULES:
 - When printing aggregation results, format them clearly, e.g.: `print(f"Total Revenue for Patricia: ${total:,.2f}")`
 - When writing file output, use `index=False`.
 
+COMPUTED / DERIVED COLUMNS:
+- Columns whose names suggest they hold a calculated value (e.g. "Total X", "Subtotal", "Gross Profit", "Amount", "% of Y") are often Excel formula cells. If the source file was generated or exported programmatically, those formulas may never have been evaluated, so pandas reads them back as entirely blank/NaN even though the underlying data is fine.
+- If a column you need for the calculation is blank/NaN across the sample rows shown, do NOT trust or sum it directly — derive it yourself from the raw component columns using the obvious business logic implied by the column names (e.g. Total Revenue = Unit Price * Qty; Gross Profit = Total Revenue - Total Cost).
+- Before printing a final aggregate result, sanity-check it: if it comes out as exactly 0 or NaN while the matching rows clearly have nonzero raw values (price, quantity, etc.), that is a strong signal you summed a blank computed column instead of deriving the value — recompute from the raw columns instead of printing the suspicious result.
+
 INPUT FORMAT RULES:
 - If `input_format` is "csv": Use `pd.read_csv(input_path, header=header_row)` to read and `df.to_csv(output_path, index=False)` to write.
 - If `input_format` is "excel": Use `pd.read_excel(input_path, header=header_row)` to read and `df.to_excel(output_path, index=False, engine='openpyxl')` to write.
